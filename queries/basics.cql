@@ -53,6 +53,9 @@ CREATE KEYSPACE test_keyspace WITH replication = {'class': 'SimpleStrategy', 're
 CREATE KEYSPACE banking WITH replication = {'class': 'SimpleStrategy', 'replication_factor': '1'}
                          AND durable_writes = true;
 
+CREATE KEYSPACE nodejs_project WITH replication = {'class': 'SimpleStrategy', 'replication_factor': '1'}
+                                AND durable_writes = true;
+
 -- Listar KEYSPACES
 SELECT *
 from system_schema.keyspaces;
@@ -65,15 +68,17 @@ USE test_keyspace;
 
 USE banking;
 
+USE nodejs_project;
+
 -- Criar TABELA
-CREATE TABLE employee_by_id
+CREATE TABLE test_keyspace.employee_by_id
 (
     id       int PRIMARY KEY,
     name     text,
     position text
 );
 
-CREATE TABLE employee_by_car_make
+CREATE TABLE test_keyspace.employee_by_car_make
 (
     car_make  text,
     id        int,
@@ -92,6 +97,13 @@ CREATE TABLE banking.transactions_by_acc
     PRIMARY KEY ((bank_id, acct_id), transaction_id ) -- bank_id, acct_id são as chaves de partição
 ) WITH CLUSTERING ORDER BY (transaction_id DESC); -- transaction_id é a coluna de clusterização
 
+CREATE TABLE nodejs_project.alunos
+(
+    id    UUID PRIMARY KEY,
+    nome  text,
+    curso text
+);
+
 -- No WHERE sempre se dever especificar a(s) chave(s) de partição e pode especificar alguma ou todas as colunas de clusterização
 
 -- Buscar na TABELA
@@ -105,9 +117,13 @@ SELECT *
 FROM banking.transactions_by_acc
 LIMIT 5;
 
+SELECT *
+FROM nodejs_project.alunos
+LIMIT 5;
+
 -- Apagar TABELA
-DROP TABLE employee_by_id;
-DROP TABLE employee_by_car_make;
+DROP TABLE  test_keyspace.employee_by_id;
+DROP TABLE test_keyspace.employee_by_car_make;
 
 -- Inserir dados na TABELA
 INSERT INTO banking.transactions_by_acc (bank_id, acct_id, transaction_id, description, amount, ts)
@@ -117,6 +133,9 @@ VALUES ('B001',
         'Debito',
         -100.13,
         '2026-11-24T04:31:10');
+
+INSERT INTO nodejs_project.alunos (id, nome, curso)
+VALUES (UUID(), 'Nathan', 'EDS');
 
 -- Atualizar TABELA
 UPDATE banking.transactions_by_acc
