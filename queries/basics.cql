@@ -43,10 +43,15 @@
 -- Para armazenar grandes quantidades de dados e fazer relatórios desses dados.
 
 -- CQL ( Cassandra Query Language)
+-- Não possui JOIN.
+
 
 -- Criar um KEYSPACE
 CREATE KEYSPACE test_keyspace WITH replication = {'class': 'SimpleStrategy', 'replication_factor': '1'}
                                AND durable_writes = true;
+
+CREATE KEYSPACE banking WITH replication = {'class': 'SimpleStrategy', 'replication_factor': '1'}
+                         AND durable_writes = true;
 
 -- Listar KEYSPACES
 SELECT *
@@ -57,6 +62,8 @@ DROP KEYSPACE test_keyspace;
 
 -- Usar KEYSPACE
 USE test_keyspace;
+
+USE banking;
 
 -- Criar TABELA
 CREATE TABLE employee_by_id
@@ -74,6 +81,19 @@ CREATE TABLE employee_by_car_make
     PRIMARY KEY ( car_make, id )
 );
 
+CREATE TABLE banking.transactions_by_acc
+(
+    bank_id        text,
+    acct_id        text,
+    transaction_id UUID,
+    description    text,
+    amount         decimal,
+    ts             timestamp,
+    PRIMARY KEY ((bank_id, acct_id), transaction_id ) -- bank_id, acct_id são as chaves de partição
+) WITH CLUSTERING ORDER BY (transaction_id DESC); -- transaction_id é a coluna de clusterização
+
+-- No WHERE sempre se dever especificar a(s) chave(s) de partição e pode especificar alguma ou todas as colunas de clusterização
+
 -- Buscar na TABELA
 SELECT *
 FROM test_keyspace.employee_by_id;
@@ -81,7 +101,41 @@ FROM test_keyspace.employee_by_id;
 SELECT *
 FROM test_keyspace.employee_by_car_make;
 
+SELECT *
+FROM banking.transactions_by_acc
+LIMIT 5;
+
 -- Apagar TABELA
 DROP TABLE employee_by_id;
 DROP TABLE employee_by_car_make;
 
+-- Inserir dados na TABELA
+INSERT INTO banking.transactions_by_acc (bank_id, acct_id, transaction_id, description, amount, ts)
+VALUES ('B001',
+        'AC001',
+        3955e20c-7311-4b61-ae20-d133fe487813,
+        'Debito',
+        -100.13,
+        '2026-11-24T04:31:10');
+
+-- Atualizar TABELA
+UPDATE banking.transactions_by_acc
+SET description = 'Debito',
+    amount      = -200.12,
+    ts = '2026-11-24T05:30:10'
+WHERE bank_id = 'B001'
+  AND acct_id = 'AC002'
+  AND transaction_id = 3955e20c-7311-4b61-ae20-d133fe487813;
+
+-- query com partition keys + clustering key
+SELECT *
+FROM banking.transactions_by_acc
+WHERE bank_id = 'B001'
+  AND acct_id = 'AC002'
+  AND transaction_id = 3955e20c-7311-4b61-ae20-d133fe487813;
+
+-- query apenas com partition keys
+SELECT *
+FROM banking.transactions_by_acc
+WHERE bank_id = 'B001'
+  AND acct_id = 'AC002';
