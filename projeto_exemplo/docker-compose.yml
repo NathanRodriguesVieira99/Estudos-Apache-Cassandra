@@ -9,6 +9,7 @@ services:
       image: cassandra:5.0
       environment:
         CASSANDRA_CLUSTER_NAME: pb-cluster
+        CASSANDRA_DC: datacenter1
         CASSANDRA_USER: cassandra
         CASSANDRA_PASSWORD: cassandra
       ports:
