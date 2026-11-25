@@ -42,11 +42,20 @@
 
 -- Para armazenar grandes quantidades de dados e fazer relatórios desses dados.
 
--- CQL ( Cassandra Query Language)
+-- CQL (Cassandra Query Language)
 -- Não possui JOIN.
-
+-- Node (nó) é uma instância do Cassandra que armazena os dados.
+-- Cluster é o conjunto de nodes que trabalham juntos.
+-- Data Center é o grupamento lógico dos nodes.
+-- KEYSPACE é basicamente o banco de dados no Cassandra.
+-- PRIMARY KEY é composta por 2 conceitos:
+-- Partition Key que é o que determina em qual partição os dados serão armazenados e como serão distribuídos
+-- O Cassandra agrupa os dados que possuem a mesma Partition Key.
+-- Clustering Columns define a organização dos registros dentro da partição.
 
 -- Criar um KEYSPACE
+-- A estratégia de replicação é a SimpleStrategy.
+-- O replication_factor indica em quantos nós os dados serão replicados, nesse caso apenas em 1.
 CREATE KEYSPACE test_keyspace WITH replication = {'class': 'SimpleStrategy', 'replication_factor': '1'}
                                AND durable_writes = true;
 
@@ -62,6 +71,8 @@ from system_schema.keyspaces;
 
 -- Apagar KEYSPACE
 DROP KEYSPACE test_keyspace;
+
+DROP KEYSPACE banking;
 
 -- Usar KEYSPACE
 USE test_keyspace;
@@ -96,6 +107,8 @@ CREATE TABLE banking.transactions_by_acc
     ts             timestamp,
     PRIMARY KEY ((bank_id, acct_id), transaction_id ) -- bank_id, acct_id são as chaves de partição
 ) WITH CLUSTERING ORDER BY (transaction_id DESC); -- transaction_id é a coluna de clusterização
+-- as transações são agrupadas pelo id do banco e da conta e organizadas pela menor data de transação.
+
 
 CREATE TABLE nodejs_project.alunos
 (
@@ -158,3 +171,6 @@ SELECT *
 FROM banking.transactions_by_acc
 WHERE bank_id = 'B001'
   AND acct_id = 'AC002';
+
+SELECT *
+FROM nodejs_project.professores;
